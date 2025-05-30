@@ -40,7 +40,6 @@ cv::Mat CaptureScreenRegion(int x, int y, int width, int height) {
 
 //------------------------------
 //Detect enemy in the OpenCV Mat
-//Consider switching to cv::inRange() + contours for better detection.
 bool DetectTarget(const cv::Mat& frame, int& outX, int& outY) {
 	
 	cv::Mat hsv;
