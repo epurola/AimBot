@@ -1,3 +1,4 @@
 opencv/
 x64/
 .vs/
+*.vcxproj.user
