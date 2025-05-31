@@ -42,5 +42,6 @@ This software is provided as-is. Use it responsibly and at your own risk. Be awa
 
 You have my **License to Kill** — permission to use this code to dominate your enemies (offline), but remember: with great power comes great responsibility. Use wisely and play fair outside the game.
 
+EXAMPLE IMAGES ARE FROM A VIDEO AND NOT FROM A REAL GAME. DO NOT CHEAT IN ONLINE GAMES
 ![alt text](image.png)
 ![alt text](image-1.png)
