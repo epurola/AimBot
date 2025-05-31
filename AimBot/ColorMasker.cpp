@@ -21,7 +21,20 @@ cv::Mat ColorMasker::MaskPurple(const cv::Mat& frame)
 	ConvertToHSV(frame, hsv);
 
 	cv::Mat colorMask;
-	cv::inRange(hsv, cv::Scalar(125, 100, 100), cv::Scalar(155, 255, 255), colorMask); //Purple
+	cv::inRange(hsv, cv::Scalar(125, 100, 100), cv::Scalar(155, 255, 255), colorMask);
+
+	RefineMask(colorMask);
+
+	return colorMask;
+}
+
+cv::Mat ColorMasker::MaskColor(const cv::Mat& frame, const cv::Scalar& hsvMin, const cv::Scalar& hsvMax)
+{
+	cv::Mat hsv;
+	ConvertToHSV(frame, hsv);
+
+	cv::Mat colorMask;
+	cv::inRange(hsv, hsvMin, hsvMax, colorMask);
 
 	RefineMask(colorMask);
 

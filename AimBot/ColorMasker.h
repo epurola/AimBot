@@ -9,6 +9,7 @@ public:
 public:
 	cv::Mat MaskRed(const cv::Mat& frame);
 	cv::Mat MaskPurple(const cv::Mat& frame);
+	cv::Mat MaskColor(const cv::Mat& frame, const cv::Scalar& hsvMin, const cv::Scalar& hsvMax);
 
 private:
 	void ConvertToHSV(const cv::Mat& frame, cv::Mat& hsv);

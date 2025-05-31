@@ -139,12 +139,20 @@
   <ItemGroup>
     <ClCompile Include="Bot.cpp" />
     <ClCompile Include="ColorMasker.cpp" />
+    <ClCompile Include="ContourAnalyzer.cpp" />
+    <ClCompile Include="EdgeDetector.cpp" />
+    <ClCompile Include="EnemyDetector.cpp" />
+    <ClCompile Include="ScreenRecorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ColorMasker.h" />
+    <ClInclude Include="ContourAnalyzer.h" />
+    <ClInclude Include="EdgeDetector.h" />
+    <ClInclude Include="EnemyDetector.h" />
+    <ClInclude Include="ScreenRecorder.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -5,6 +5,9 @@
 #include <cmath>
 #include <opencv2/opencv.hpp>
 #include "ColorMasker.h"
+#include "EdgeDetector.h"
+#include "EnemyDetector.h"
+#include "ScreenRecorder.h"
 
 HANDLE hSerial;
 
@@ -12,85 +15,6 @@ constexpr int REGION_WIDTH = 500;
 constexpr int REGION_HEIGHT = 500;
 const std::string SERIAL_PORT = "COM3";  // change to the actual port number
 
-cv::Mat CaptureScreenRegion(int x, int y, int width, int height) {
-	HDC hScreenDC = GetDC(NULL);
-	HDC hMemoryDC = CreateCompatibleDC(hScreenDC);
-
-	HBITMAP hBitMap = CreateCompatibleBitmap(hScreenDC, width, height);
-	SelectObject(hMemoryDC, hBitMap);
-
-	BitBlt(hMemoryDC, 0, 0, width, height, hScreenDC, x, y, SRCCOPY);
-
-	BITMAPINFOHEADER bi = {};
-	bi.biSize = sizeof(BITMAPINFOHEADER);
-	bi.biWidth = width;
-	bi.biHeight = -height; //- to flip image the right side up
-	bi.biPlanes = 1;
-	bi.biBitCount = 24;
-	bi.biCompression = BI_RGB;
-
-	cv::Mat mat(height, width, CV_8UC3);
-	GetDIBits(hMemoryDC, hBitMap, 0, height, mat.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
-
-	DeleteObject(hBitMap);
-	DeleteDC(hMemoryDC);
-	DeleteDC(hScreenDC);
-
-	return mat;
-}
-
-//------------------------------
-//Detect enemy in the OpenCV Mat
-bool DetectTarget(const cv::Mat& frame, int& outX, int& outY) {
-	
-	ColorMasker masker;
-	cv::Mat colorMask = masker.MaskPurple(frame);
-
-	std::vector<std::vector<cv::Point>> contours;
-
-	cv::findContours(colorMask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-
-	// Find largest outline contour
-	double maxArea = 0;
-	cv::Rect largestBox;
-	for (const auto& contour : contours) 
-	{
-		double area = cv::contourArea(contour);
-
-		if (area > 50 && area > maxArea) 
-		{
-			maxArea = area;
-			largestBox = cv::boundingRect(contour);
-		}
-	}
-
-	if (maxArea > 0) 
-	{
-		cv::rectangle(frame, largestBox, cv::Scalar(0, 255, 0), 2);
-		outX = largestBox.x + largestBox.width / 2;
-		outY = largestBox.y + largestBox.height / 2;
-		// Draw green circle at the center
-		cv::circle(frame, cv::Point(outX, outY), 5, cv::Scalar(0, 255, 0), -1); 
-		cv::Mat resizedFrame;
-		cv::resize(frame, resizedFrame, cv::Size(), 1.5, 1.5); 
-
-		cv::imshow("Screen Region", resizedFrame);
-
-		cv::waitKey(1);
-		return true;
-	}
-	cv::Mat resizedFrame;
-	cv::resize(frame, resizedFrame, cv::Size(), 1.5, 1.5);
-
-	cv::imshow("Screen Region", resizedFrame);
-	cv::waitKey(1);
-	
-	if (contours.empty()) return false;
-
-	return true;
-}
-
-//--------------------------
 
 bool InitSerial(const std::string& portName) 
 {
@@ -124,27 +48,39 @@ void SendAimOffset(int dx, int dy)
 
 int main() 
 {
-	SetProcessDPIAware();
-	int screenW = GetSystemMetrics(SM_CXSCREEN);
-	int screenH = GetSystemMetrics(SM_CYSCREEN);
-
-	//Top left corner of the capture region
-	int centerX = screenW / 2 - REGION_WIDTH / 2;
-	int centerY = screenH / 2 - REGION_HEIGHT / 2;
-
 	//if (!InitSerial(SERIAL_PORT)) return 1;
+	
+	//Detects enemies based on (provided color not yet implemented) color
+	EnemyDetector enemyDetector;
+	//Records area in the middle of the screen which size is defined by REGION_WIDTH and REGION_HEIGHT
+	ScreenRecorder screenRecorder(REGION_WIDTH, REGION_HEIGHT);
+	int centerX = screenRecorder.GetCenterX();
+	int centerY = screenRecorder.GetCenterY();
 
 	while (true) 
 	{
 		//Region around the center of the screen
-		cv::Mat frame = CaptureScreenRegion(centerX, centerY, REGION_WIDTH, REGION_HEIGHT);
+		cv::Mat frame = screenRecorder.CaptureScreen();
+		//Returns the bigges box whiich is likely the enemy
+		cv::Rect bbox = enemyDetector.detectEnemy(frame);
 
-		int tx, ty; //Coordinates inside the region. The center of the contour bbox.
-		if (DetectTarget(frame, tx, ty)) //Sets tx, ty values
+		int tx, ty; //Coordinates inside the recorded region. 
+		if (bbox.area() > 0) 
 		{
-			int dx = tx - REGION_WIDTH / 2;
-			int dy = ty - REGION_HEIGHT / 2;
+			//Center of the enemy box
+			tx = bbox.x + bbox.width / 2;
+		    ty = bbox.y + bbox.height / 2;
 
+			//Draw bbox around the enemy and a circle to visualize aim region
+			//Aim may not always be on the enemy todo: make sure it stays inside detected area
+			cv::rectangle(frame, bbox, cv::Scalar(0, 255, 0), 2);
+			cv::circle(frame, cv::Point(tx, ty), 5, cv::Scalar(0, 255, 0), -1);
+
+			//aim delta
+			int dx = 0;
+			int dy = 0;
+
+			//Location of the enemy on the sreen
 			int screenX = centerX + tx;
 			int screenY = centerY + ty;
 			
@@ -156,7 +92,13 @@ int main()
 
 			}
 		}
+		cv::Mat resizedFrame;
+		cv::resize(frame, resizedFrame, cv::Size(), 1.5, 1.5);
+
+		cv::imshow("Screen Region", resizedFrame);
+		cv::waitKey(1);
 	}
+
 	CloseHandle(hSerial);
 	return 0;
 }
