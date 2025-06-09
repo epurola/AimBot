@@ -13,7 +13,7 @@ HANDLE hSerial;
 
 constexpr int REGION_WIDTH = 500;
 constexpr int REGION_HEIGHT = 500;
-const std::string SERIAL_PORT = "COM3";  // change to the actual port number
+const std::string SERIAL_PORT = "COM5";  // change to the actual port number
 
 
 bool InitSerial(const std::string& portName) 
@@ -48,14 +48,12 @@ void SendAimOffset(int dx, int dy)
 
 int main() 
 {
-	//if (!InitSerial(SERIAL_PORT)) return 1;
+	if (!InitSerial(SERIAL_PORT)) return 1;
 	
 	//Detects enemies based on (provided color not yet implemented) color
 	EnemyDetector enemyDetector;
 	//Records area in the middle of the screen which size is defined by REGION_WIDTH and REGION_HEIGHT
 	ScreenRecorder screenRecorder(REGION_WIDTH, REGION_HEIGHT);
-	int centerX = screenRecorder.GetCenterX();
-	int centerY = screenRecorder.GetCenterY();
 
 	while (true) 
 	{
@@ -76,20 +74,30 @@ int main()
 			cv::rectangle(frame, bbox, cv::Scalar(0, 255, 0), 2);
 			cv::circle(frame, cv::Point(tx, ty), 5, cv::Scalar(0, 255, 0), -1);
 
-			//aim delta
-			int dx = 0;
-			int dy = 0;
-
 			//Location of the enemy on the sreen
-			int screenX = centerX + tx;
-			int screenY = centerY + ty;
+			int screenX = screenRecorder.GetX() + tx;
+			int screenY = screenRecorder.GetY() + ty;
+
+			POINT currentPos;
+			GetCursorPos(&currentPos);
+
+			//aim delta
+			int dx = screenX - currentPos.x;
+			int dy = screenY - currentPos.y;
+
+			float scaleX = 620.0f / 2560.0f;  // ≈ 0.242
+			float scaleY = 415.0f / 1440.0f;  // ≈ 0.288
+
+			int scaledDx = static_cast<int>(dx * scaleX);
+			int scaledDy = static_cast<int>(dy * scaleY);
+
+			std::cout << "DX: " << dx << "DY: " << dy << std::endl;
 			
 			if (std::abs(dx) > 2 || std::abs(dy) > 2)
 			{
-				//SendAimOffset(screenX, screenY);
-				if (GetAsyncKeyState(VK_LBUTTON) & 0x8000);
-				//SetCursorPos(screenX, screenY);
-
+				if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
+					//SetCursorPos(screenX, screenY);
+					SendAimOffset(scaledDx, scaledDy);
 			}
 		}
 		cv::Mat resizedFrame;

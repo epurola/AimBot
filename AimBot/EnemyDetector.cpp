@@ -9,7 +9,7 @@ EnemyDetector::EnemyDetector()
 
 cv::Rect EnemyDetector::detectEnemy(const cv::Mat& frame)
 {
-	cv::Mat mask = colorMasker->MaskPurple(frame);
+	cv::Mat mask = colorMasker->MaskRed(frame);
 
 	cv::Mat maskedBGR;
 	cv::bitwise_and(frame, frame, maskedBGR, mask);

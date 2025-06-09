@@ -9,6 +9,8 @@ public:
 
 	int GetCenterX() const { return centerX; }
 	int GetCenterY() const { return centerY; }
+	int GetX() const { return x; }
+	int GetY() const { return y; }
 	
 private:
 	int x = 0;
