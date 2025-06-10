@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <windows.h>
 #include <iostream>
 #include <vector>
@@ -13,7 +14,7 @@ HANDLE hSerial;
 
 constexpr int REGION_WIDTH = 500;
 constexpr int REGION_HEIGHT = 500;
-const std::string SERIAL_PORT = "COM5";  // change to the actual port number
+const std::string SERIAL_PORT = "COM3";  // change to the actual port number
 
 
 bool InitSerial(const std::string& portName) 
@@ -84,20 +85,12 @@ int main()
 			//aim delta
 			int dx = screenX - currentPos.x;
 			int dy = screenY - currentPos.y;
-
-			float scaleX = 620.0f / 2560.0f;  // ≈ 0.242
-			float scaleY = 415.0f / 1440.0f;  // ≈ 0.288
-
-			int scaledDx = static_cast<int>(dx * scaleX);
-			int scaledDy = static_cast<int>(dy * scaleY);
-
-			std::cout << "DX: " << dx << "DY: " << dy << std::endl;
-			
-			if (std::abs(dx) > 2 || std::abs(dy) > 2)
+		
+			if (std::abs(dx) > 1 || std::abs(dy) > 1)
 			{
 				if (GetAsyncKeyState(VK_LBUTTON) & 0x8000)
 					//SetCursorPos(screenX, screenY);
-					SendAimOffset(scaledDx, scaledDy);
+					SendAimOffset(dx, dy);
 			}
 		}
 		cv::Mat resizedFrame;
